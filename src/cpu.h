@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 
 class CPU {
 public:
@@ -28,6 +29,7 @@ private:
 	unsigned char sound_timer; //60Hz count register, counts to zero if set above 0, system's buzzer sounds when reaching 0
 
 	unsigned short stack[16]; //stack levels
+	//std::array<unsigned short, 16> stack = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	unsigned short sp; //stack pointer
 
 	//SUPER-CHIP8

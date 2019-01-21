@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <time.h>
 
+#include <iostream>
+
 void CPU::initialize() {
 	pc = 0x200;
 	opcode = 0;
@@ -55,6 +57,14 @@ void CPU::initialize() {
 void CPU::emulateCycle() {
 	//Fetch Opcode
 	opcode = memory[pc] << 8 | memory[pc + 1];
+	//printf("opcode: " +opcode);
+	//printf("PC: ");// +pc);
+	//printf("I: ");// +I);
+	std::cout << "[opcode - " << opcode; //<< std::endl;
+	std::cout << "] - [pc - " << pc; // << std::endl;
+	std::cout << "] [I - " << I; // << std::endl;
+	std::cout << "] [sp - " << sp; // << std::endl;
+	std::cout << "] [stack " << stack[sp] << "]"<< std::endl;
 
 	//Decode Opcode
 	switch (opcode & 0xF000) {
@@ -80,100 +90,104 @@ void CPU::emulateCycle() {
 				case 0x00E0:
 				{
 					switch (opcode & 0x000F) {
-					case 0x0000: //0x00E0: Clears the screen
-					{
-						/*/
-						if (sMode) {
-							unsigned char display[128 * 64];
-							display = gfxSuper;
+						case 0x0000: //0x00E0: Clears the screen
+						{
+							/*/
+							if (sMode) {
+								unsigned char display[128 * 64];
+								display = gfxSuper;
+							}
+							else {
+								unsigned char display[32 * 64];
+								display = gfx;
+							}
+							*/
+							for (auto& d : gfx) {
+								d = 0;
+							}
+							//for (int i = 0; i < 2048; ++i) {
+							//	gfx[i] = 0x0;
+							//}
+							drawFlag = true;
+							pc += 2;
 						}
-						else {
-							unsigned char display[32 * 64];
-							display = gfx;
+						break;
+						case 0x000E: //0x00EE: Returns from subroutine 
+						{
+							--sp;
+							pc = stack[sp];
+							//--sp;
+							pc += 2;
 						}
-						*/
-						for (auto& d : gfx) {
-							d = 0;
-						}
-						//for (int i = 0; i < 2048; ++i) {
-						//	gfx[i] = 0x0;
-						//}
-						drawFlag = true;
-						pc += 2;
-					}
-					break;
-					case 0x000E: //0x00EE: Returns from subroutine 
-					{
-						--sp;
-						pc = stack[sp];
-						pc += 2;
-					}
-					break;
-					default:
-						printf("Unknown opcode: 0x%X\n", opcode);
+						break;
+						default:
+							printf("Unknown opcode: 0x%X\n", opcode);
 						break;
 					}
 				}
+				break;
 				case 0x00F0:
 				{
 					switch (opcode & 0x000F) {
-					case 0x000A: //0x00FA: 
-					{
-						pc += 2;
-					}
-					break;
-					case 0x000B: //0x00FB: Scroll display 4 pixels to the right
-					{
-						for (size_t i = 0; i < (screenHeight * screenWidth); i++) {
-
+						case 0x000A: //0x00FA: 
+						{
+							pc += 2;
 						}
-						pc += 2;
-					}
-					break;
-					case 0x000C: //0x00FC:
-					{
-						pc = stack[--sp];
-						pc += 2;
-					}
-					break;
-					case 0x000D: //0x00FD: Exit the interpreter
-					{
-						exitInterpreter = true;
-					}
-					break;
-					//case 0x000E: //0x00FE: Enable low res (64x32) mode
-					//{
-						//sMode = false;
-						//screenHeight = 32;
-						//screenWidth = 64;
-						//delete gfx;
-						//gfx = new unsigned char[screenHeight * screenWidth];
-						//pc += 2;
-					//}
-					//break;
-					case 0x000F: //0x00FF: Enable high res (128x64) mode
-					{
-						sMode = true;
-						screenHeight = 64;
-						screenWidth = 128;
-						//gfx = new unsigned char[screenHeight * screenWidth];
-						pc += 2;
-					}
-					break;
-					default:
-						printf("Unknown opcode: 0x%X\n", opcode);
+						break;
+						case 0x000B: //0x00FB: Scroll display 4 pixels to the right
+						{
+							for (size_t i = 0; i < (screenHeight * screenWidth); i++) {
+
+							}
+							pc += 2;
+						}
+						break;
+						//case 0x000C: //0x00FC:
+						//{
+						//	pc = stack[--sp];
+						//	pc += 2;
+						//}
+						break;
+						case 0x000D: //0x00FD: Exit the interpreter
+						{
+							exitInterpreter = true;
+						}
+						break;
+						//case 0x000E: //0x00FE: Enable low res (64x32) mode
+						//{
+							//sMode = false;
+							//screenHeight = 32;
+							//screenWidth = 64;
+							//delete gfx;
+							//gfx = new unsigned char[screenHeight * screenWidth];
+							//pc += 2;
+						//}
+						//break;
+						case 0x000F: //0x00FF: Enable high res (128x64) mode
+						{
+							sMode = true;
+							screenHeight = 64;
+							screenWidth = 128;
+							//gfx = new unsigned char[screenHeight * screenWidth];
+							pc += 2;
+						}
+						break;
+						default:
+							printf("Unknown opcode: 0x%X\n", opcode);
+							exit(1);
 						break;
 					}
 				}
+				break;
 				//case 0x00A0: //0x02A0: 
 				//{
 
 				//}
-				break;
+				//break;
 				default:
 					printf("Unknown opcode: 0x%X\n", opcode);
-					break;
-				}
+				break;
+			}
 		}
 		break;
 		//----------------------------------------------------------------
@@ -231,6 +245,7 @@ void CPU::emulateCycle() {
 		break;
 		//----------------------------------------------------------------
 		case 0x8000:
+		{
 			switch (opcode & 0x000F) {
 				case 0x0000: //0x8XY0: Sets VX to the value of VY.
 				{
@@ -291,7 +306,8 @@ void CPU::emulateCycle() {
 				{
 					if (V[(opcode & 0x0F00) >> 8] > V[(opcode & 0x00F0) >> 4]) {
 						V[0xF] = 0;
-					} else {
+					}
+					else {
 						V[0xF] = 1;
 					}
 					V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] - V[(opcode & 0x0F00) >> 8];
@@ -309,6 +325,7 @@ void CPU::emulateCycle() {
 					printf("Unknown opcode: 0x%X\n", opcode);
 				break;
 			}
+		}
 		break;
 		//----------------------------------------------------------------
 		case 0x9000: //0x9XY0: Skips the next instruction if VX doesn't equal VY. 
@@ -386,6 +403,7 @@ void CPU::emulateCycle() {
 		break;
 		//----------------------------------------------------------------
 		case 0xE000:
+		{
 			switch (opcode & 0x00FF) {
 				case 0x009E: //0xEX9E: Skips the next instruction if the key stored in VX is pressed.
 				{
@@ -407,9 +425,11 @@ void CPU::emulateCycle() {
 					printf("Unknown opcode: 0x%X\n", opcode);
 				break;
 			}
+		}
 		break;
 		//----------------------------------------------------------------
 		case 0xF000:
+		{
 			switch (opcode & 0x00FF) {
 				case 0x0007: //0xFX07: Sets VX to the value of the delay timer.
 					V[(opcode & 0x0F00) >> 8] = delay_timer;
@@ -517,6 +537,7 @@ void CPU::emulateCycle() {
 					printf("Unknown opcode: 0x%X\n", opcode);
 				break;
 			}
+		}
 		break;
 		//----------------------------------------------------------------
 		default:
